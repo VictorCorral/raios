@@ -1,0 +1,13 @@
+#install.packages("XML")
+
+library(XML)
+
+url_meteogalicia <- "http://servizos.meteogalicia.es/rss/observacion/rssRaios.action?request_locale=gl&data=5/12/2011"
+xmlDocument <- xmlParse(url_meteogalicia)
+rootNode <- xmlRoot(xlmDocument)
+
+catalogo <- xmlSApply(rootNode, function(x) {
+  xmlSApply(x, xmlValue)
+})
+
+View(catalogo)
