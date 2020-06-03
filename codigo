@@ -1,13 +1,31 @@
-#install.packages("XML")
+library(rvest)
+library(purrr)
+library(dplyr)
+library(xlsx)
 
-library(XML)
+kfechaFinal = Sys.Date()
+kfechaInicial = kfechaFinal-7
 
-url_meteogalicia <- "http://servizos.meteogalicia.es/rss/observacion/rssRaios.action?request_locale=gl&data=5/12/2011"
-xmlDocument <- xmlParse(url_meteogalicia)
-rootNode <- xmlRoot(xlmDocument)
+kfechaFinal = as.character(kfechaFinal, format="%d/%m/%Y")
+kfechaInicial = as.character(kfechaInicial, format="%d/%m/%Y")
 
-catalogo <- xmlSApply(rootNode, function(x) {
-  xmlSApply(x, xmlValue)
-})
 
-View(catalogo)
+url<-paste("http://servizos.meteogalicia.es/rss/observacion/rssRaios.action?request_locale=gl&dataIni=", kfechaInicial,"&dataFin=", kfechaFinal,sep ="")
+
+url_meteogalicia <- url
+
+meteoParse <- read_html(url_meteogalicia)
+meteoNodes <- html_nodes(meteoParse, "raio")
+
+dt_raios = html_nodes(meteoParse, "raio") %>%
+  map(xml_attrs)%>%
+  map_df(~as.list(.))
+
+dt_raios %>%
+  mutate_at("id", as.integer) %>%
+  mutate_at(c("lat", "lon", "peakcurrent"), as.numeric) %>%
+  mutate_at("horautc", data.table::as.ITime)
+
+
+
+write.xlsx(dt_raios, "C:/.../RStudio/Raios/raios.xlsx", sheetName = "raiosXaneiro", row.names = TRUE ,append = TRUE)
